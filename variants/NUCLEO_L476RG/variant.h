@@ -98,11 +98,18 @@ enum {
   PC3_2,//D55/A9  = D29
   PC5_2,//D56/A10 = D35
   PC4_2,//D57/A11 = D45
+  PG9,
+  PG10,
+  PG11,
+  PG12,
+  PG13,
+  PG14,
   PEND
 };
 
+
 // This must be a literal with the same value as PEND
-#define NUM_DIGITAL_PINS        58
+#define NUM_DIGITAL_PINS        64 //58
 // This must be a literal with a value less than or equal to to MAX_ANALOG_INPUTS
 #define NUM_ANALOG_INPUTS       12
 #define NUM_ANALOG_FIRST        46
@@ -122,7 +129,19 @@ enum {
 #define TIMER_SERVO             TIM2  //TODO: advanced-control timers don't work
 
 // UART Definitions
-#define SERIAL_UART_INSTANCE    2 //Connected to ST-Link
+#define SERIAL_UART_INSTANCE    2 // UART2
+
+#if 0
+#define ENABLE_HWSERIAL1   // USART1
+#define ENABLE_HWSERIAL3   // USART3
+#define ENABLE_HWSERIAL4   // UART4
+#define ENABLE_HWSERIAL5   // UART5
+#endif
+
+#if 0
+#define SERIAL_TX_BUFFER_SIZE 1024
+#define SERIAL_RX_BUFFER_SIZE 1024
+#endif
 
 // Default pin used for 'Serial' instance (ex: ST-Link)
 // Mandatory for Firmata

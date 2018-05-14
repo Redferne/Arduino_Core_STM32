@@ -74,6 +74,8 @@ void digitalWrite( uint32_t ulPin, uint32_t ulVal )
   if(p != NC) {
     if(is_pin_configured(p, g_digPinConfigured)) {
       digital_io_write(get_GPIO_Port(STM_PORT(p)), STM_GPIO_PIN(p), ulVal);
+    } else {
+      printf("Pin Not Configured!\n");
     }
   }
 }
