@@ -60,6 +60,9 @@
 
 uint8_t eeprom_read_byte(const uint16_t __p);
 void eeprom_write_byte(uint16_t __p, uint8_t __value);
+uint8_t eeprom_begin(void);
+void eeprom_end(void);
+uint8_t eeprom_commit(void);
 
 #ifdef __cplusplus
 }

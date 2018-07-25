@@ -1,7 +1,9 @@
 #ifndef _STM32_DEF_
 #define _STM32_DEF_
 
+#ifndef F_CPU
 #define F_CPU SystemCoreClock
+#endif
 #define USE_HAL_DRIVER
 
 #ifdef STM32F0xx
@@ -37,6 +39,11 @@
 // Here define some compatibility
 #ifndef CAN1
 #define CAN1 CAN
+#endif
+
+// Required by PinMap_DFSDM_CKOUT to not set the field 'peripheral' with value 'NP'
+#ifdef HAL_DFSDM_MODULE_ENABLED
+#define DFSDM (void*)(0x01U)
 #endif
 
 /**

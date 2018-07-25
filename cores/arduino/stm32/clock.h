@@ -52,6 +52,7 @@
 /* Exported functions ------------------------------------------------------- */
 uint32_t GetCurrentMilli(void);
 uint32_t GetCurrentMicro(void);
+void systick_attach_callback(void (*callback)(void));
 void delayInsideIT(uint32_t delay_us);
 
 #ifdef __cplusplus

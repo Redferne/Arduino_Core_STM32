@@ -41,6 +41,8 @@
  extern "C" {
 #endif
 
+static void (*systick_user_callback)(void);
+
 /**
   * @brief  Function called to read the current micro second
   * @param  None
@@ -69,8 +71,14 @@ uint32_t GetCurrentMilli(void)
   return HAL_GetTick();
 }
 
-void noOsSystickHandler(){
+void noOsSystickHandler() {
+  if (systick_user_callback) {
+      systick_user_callback();
+  }
+}
 
+void systick_attach_callback(void (*callback)(void)) {
+    systick_user_callback = callback;
 }
 
 void osSystickHandler() __attribute__((weak, alias("noOsSystickHandler")));

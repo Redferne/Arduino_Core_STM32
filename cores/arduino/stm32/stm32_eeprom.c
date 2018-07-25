@@ -47,6 +47,8 @@
   * @{
   */
 #include "stm32_eeprom.h"
+#include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -136,8 +138,8 @@ static inline uint32_t get_flash_end(void) {
 /** @addtogroup STM32F4xx_System_Private_Variables
   * @{
   */
-static uint8_t tmpEE[E2END] = {0};
-
+static uint8_t *tmpEE = NULL;
+static bool edit = false;
 /**
   * @}
   */
@@ -160,11 +162,40 @@ void set_data_to_flash(void);
 uint8_t eeprom_read_byte(const uint16_t __p)
 {
   uint8_t byte = 0;
-
-  get_data_from_flash();
+  if (!tmpEE)
+    return 0;
   byte = tmpEE[__p];
-
   return byte;
+}
+
+uint8_t eeprom_begin(void)
+{
+  tmpEE = malloc(E2END);
+  if (tmpEE) {
+    get_data_from_flash();
+    return 0;
+  }
+  return 1;
+}
+
+void eeprom_end(void)
+{
+  if (tmpEE) {
+    free(tmpEE);
+    tmpEE = NULL;
+    edit = false;
+  }
+}
+
+uint8_t eeprom_commit(void)
+{
+  if (tmpEE) {
+    if (edit) {
+      set_data_to_flash();
+      return 0;
+    }
+  }
+  return 1;
 }
 
 /**
@@ -175,8 +206,10 @@ uint8_t eeprom_read_byte(const uint16_t __p)
   */
 void eeprom_write_byte(uint16_t __p, uint8_t __value)
 {
+  if (!tmpEE)
+    return;
   tmpEE[__p] = __value;
-  set_data_to_flash();
+  edit = true;
 }
 
 /**
