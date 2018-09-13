@@ -1,0 +1,6 @@
+{
+    "description":"Arduino Wiring-based Framework (Core STM32)",
+    "name":"framework-arduinocorestm32",
+    "url":"https://github.com/Redferne/Arduino_Core_STM32",
+    "version":"1.2.0-test"
+}
