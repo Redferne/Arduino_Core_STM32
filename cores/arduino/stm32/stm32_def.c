@@ -1,4 +1,5 @@
 #include "stm32_def.h"
+#include "core_debug.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,9 +17,7 @@ WEAK void _Error_Handler(const char * msg, int val)
    * the code, use a lot of stack. An alternative, will be to implement a tiny
    * and limited functionality implementation of printf.
    */
-  UNUSED(msg);
-  UNUSED(val);
-  /*printf("Error: %s (%i)\n", msg, val);*/
+  core_debug("Error: %s (%i)\n", msg, val);
   while(1)
   {
   }

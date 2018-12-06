@@ -15,6 +15,8 @@
 #include "Arduino.h"
 #include <stdio.h>
 
+#ifdef HAL_SPI_MODULE_ENABLED
+
 // SPI_HAS_TRANSACTION means SPI has
 //   - beginTransaction()
 //   - endTransaction()
@@ -260,5 +262,7 @@ class SPIClass {
 };
 
 extern SPIClass SPI;
+
+#endif
 
 #endif

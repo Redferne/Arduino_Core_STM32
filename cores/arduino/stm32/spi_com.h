@@ -49,6 +49,8 @@
 
 /* Exported types ------------------------------------------------------------*/
 
+#ifdef HAL_SPI_MODULE_ENABLED
+
 struct spi_s {
     SPI_HandleTypeDef handle;
     SPI_TypeDef *spi;
@@ -59,7 +61,6 @@ struct spi_s {
 };
 
 typedef struct spi_s spi_t;
-
 
 ///@brief specifies the SPI speed bus in HZ.
 #define SPI_SPEED_CLOCK_DEFAULT     4000000
@@ -104,6 +105,8 @@ spi_status_e spi_send(spi_t *obj, uint8_t *Data, uint16_t len, uint32_t Timeout)
 spi_status_e spi_transfer(spi_t *obj, uint8_t * tx_buffer,
                       uint8_t * rx_buffer, uint16_t len, uint32_t Timeout);
 uint32_t spi_getClkFreq(spi_t *obj);
+
+#endif
 
 #ifdef __cplusplus
 }

@@ -100,22 +100,11 @@ void RTC_SetClockSource(sourceClock_t source)
   */
 static void RTC_initClock(sourceClock_t source)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_PeriphCLKInitTypeDef PeriphClkInit;
 
   if(source == LSE_CLOCK) {
     /* Enable the clock if not already set by user */
-    if(__HAL_RCC_GET_FLAG(RCC_FLAG_LSERDY) == RESET) {
-#ifdef __HAL_RCC_LSEDRIVE_CONFIG
-      __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
-#endif
-      RCC_OscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSE;
-      RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-      RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-      if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-        Error_Handler();
-      }
-    }
+    enableClock(LSE_CLOCK);
 
     PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
     PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
@@ -125,14 +114,8 @@ static void RTC_initClock(sourceClock_t source)
     clkSrc = LSE_CLOCK;
   } else if(source == HSE_CLOCK) {
     /* Enable the clock if not already set by user */
-    if(__HAL_RCC_GET_FLAG(RCC_FLAG_HSERDY) == RESET) {
-      RCC_OscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_HSE;
-      RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-      RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-      if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-        Error_Handler();
-      }
-    }
+    enableClock(HSE_CLOCK);
+
     /* HSE division factor for RTC clock must be set to ensure that
      * the clock supplied to the RTC is less than or equal to 1 MHz
      */
@@ -182,14 +165,7 @@ static void RTC_initClock(sourceClock_t source)
     clkSrc = HSE_CLOCK;
   } else if(source == LSI_CLOCK) {
     /* Enable the clock if not already set by user */
-    if(__HAL_RCC_GET_FLAG(RCC_FLAG_LSIRDY) == RESET) {
-      RCC_OscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI;
-      RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-      RCC_OscInitStruct.LSIState = RCC_LSI_ON;
-      if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-        Error_Handler();
-      }
-    }
+    enableClock(LSI_CLOCK);
 
     PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
     PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
@@ -345,7 +321,7 @@ void RTC_init(hourFormat_t format, sourceClock_t source)
   RTC_SetDate(17, 1, 1, 7);
 
   /*at 0:0:0*/
-  RTC_SetTime(0,0,0,0,AM);
+  RTC_SetTime(0,0,0,0,HOUR_AM);
 
 #if !defined(STM32F1xx) && !defined(STM32F2xx)
   /* Enable Direct Read of the calendar registers (not through Shadow) */
@@ -382,7 +358,7 @@ void RTC_SetTime(uint8_t hours, uint8_t minutes, uint8_t seconds, uint32_t subSe
 
   /* Ignore time AM PM configuration if in 24 hours format */
   if(initFormat == HOUR_FORMAT_24) {
-    period = AM;
+    period = HOUR_AM;
   }
 
   if((((initFormat == HOUR_FORMAT_24) && IS_RTC_HOUR24(hours)) || IS_RTC_HOUR12(hours))
@@ -391,7 +367,7 @@ void RTC_SetTime(uint8_t hours, uint8_t minutes, uint8_t seconds, uint32_t subSe
     RTC_TimeStruct.Minutes = minutes;
     RTC_TimeStruct.Seconds = seconds;
 #if !defined(STM32F1xx)
-    if(period == PM) {
+    if(period == HOUR_PM) {
       RTC_TimeStruct.TimeFormat = RTC_HOURFORMAT12_PM;
     } else {
       RTC_TimeStruct.TimeFormat = RTC_HOURFORMAT12_AM;
@@ -433,9 +409,9 @@ void RTC_GetTime(uint8_t *hours, uint8_t *minutes, uint8_t *seconds, uint32_t *s
     *seconds = RTC_TimeStruct.Seconds;
 #if !defined(STM32F1xx)
     if(RTC_TimeStruct.TimeFormat == RTC_HOURFORMAT12_PM) {
-      *period = PM;
+      *period = HOUR_PM;
     } else {
-      *period = AM;
+      *period = HOUR_AM;
     }
 #if (!defined(STM32F2xx) && !defined(STM32L1xx)) || defined(STM32L1_ULPH)
     *subSeconds = RTC_TimeStruct.SubSeconds;
@@ -504,7 +480,7 @@ void RTC_StartAlarm(uint8_t day, uint8_t hours, uint8_t minutes, uint8_t seconds
 
   /* Ignore time AM PM configuration if in 24 hours format */
   if(initFormat == HOUR_FORMAT_24) {
-    period = AM;
+    period = HOUR_AM;
   }
 
   if((((initFormat == HOUR_FORMAT_24) && IS_RTC_HOUR24(hours)) || IS_RTC_HOUR12(hours))
@@ -522,7 +498,7 @@ void RTC_StartAlarm(uint8_t day, uint8_t hours, uint8_t minutes, uint8_t seconds
 #else
     UNUSED(subSeconds);
 #endif /* !STM32F2xx && !STM32L1xx || STM32L1_ULPH */
-    if(period == PM) {
+    if(period == HOUR_PM) {
       RTC_AlarmStructure.AlarmTime.TimeFormat = RTC_HOURFORMAT12_PM;
     } else {
       RTC_AlarmStructure.AlarmTime.TimeFormat = RTC_HOURFORMAT12_AM;
@@ -599,9 +575,9 @@ void RTC_GetAlarm(uint8_t *day, uint8_t *hours, uint8_t *minutes, uint8_t *secon
 #if !defined(STM32F1xx)
     *day = RTC_AlarmStructure.AlarmDateWeekDay;
     if(RTC_AlarmStructure.AlarmTime.TimeFormat == RTC_HOURFORMAT12_PM) {
-      *period = PM;
+      *period = HOUR_PM;
     } else {
-      *period = AM;
+      *period = HOUR_AM;
     }
 #if !defined(STM32F2xx) && !defined(STM32L1xx) || defined(STM32L1_ULPH)
     *subSeconds = RTC_AlarmStructure.AlarmTime.SubSeconds;

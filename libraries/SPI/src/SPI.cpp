@@ -11,6 +11,8 @@
 
 #include "SPI.h"
 
+#ifdef HAL_SPI_MODULE_ENABLED
+
 SPIClass SPI;
 
 /**
@@ -460,3 +462,5 @@ void SPIClass::attachInterrupt(void) {
 void SPIClass::detachInterrupt(void) {
 	// Should be disableInterrupt()
 }
+
+#endif

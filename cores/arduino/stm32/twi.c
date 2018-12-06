@@ -47,6 +47,7 @@
 /** @addtogroup STM32F4xx_System_Private_Includes
   * @{
   */
+#include "core_debug.h"
 #include "stm32_def.h"
 #include "twi.h"
 #include "PinAF_STM32F1.h"
@@ -164,14 +165,14 @@ void i2c_custom_init(i2c_t *obj, i2c_timing_e timing, uint32_t addressingMode, u
 
   //Pins SDA/SCL must not be NP
   if(i2c_sda == NP || i2c_scl == NP) {
-    printf("ERROR: at least one I2C pin has no peripheral\n");
+    core_debug("ERROR: at least one I2C pin has no peripheral\n");
     return;
   }
 
   obj->i2c = pinmap_merge_peripheral(i2c_sda, i2c_scl);
 
   if(obj->i2c == NP) {
-    printf("ERROR: I2C pins mismatch\n");
+    core_debug("ERROR: I2C pins mismatch\n");
     return;
   }
 
