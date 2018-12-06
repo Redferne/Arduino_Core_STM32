@@ -47,21 +47,27 @@ void pinMode( uint32_t ulPin, uint32_t ulMode )
       reset_pin_configured(p, g_anOutputPinConfigured);
     }
 
-    switch ( ulMode )
-    {
-      case INPUT:
-        digital_io_init(p, GPIO_MODE_INPUT, GPIO_NOPULL);
+    switch (ulMode) {
+      case INPUT: /* INPUT_FLOATING */
+        pin_function(p, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
       break;
       case INPUT_PULLUP:
-        digital_io_init(p, GPIO_MODE_INPUT, GPIO_PULLUP);
+        pin_function(p, STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, 0));
       break;
       case INPUT_PULLDOWN:
-        digital_io_init(p, GPIO_MODE_INPUT, GPIO_PULLDOWN);
+        pin_function(p, STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLDOWN, 0));
+        break;
+      case INPUT_ANALOG:
+        pin_function(p, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
       break;
       case OUTPUT:
-        digital_io_init(p, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL);
+        pin_function(p, STM_PIN_DATA(STM_MODE_OUTPUT_PP, GPIO_NOPULL, 0));
+        break;
+      case OUTPUT_OPEN_DRAIN:
+        pin_function(p, STM_PIN_DATA(STM_MODE_OUTPUT_OD, GPIO_NOPULL, 0));
       break;
       default:
+        Error_Handler();
       break;
     }
     set_pin_configured(p, g_digPinConfigured);
@@ -70,26 +76,17 @@ void pinMode( uint32_t ulPin, uint32_t ulMode )
 
 void digitalWrite( uint32_t ulPin, uint32_t ulVal )
 {
-  PinName p = digitalPinToPinName(ulPin);
-  if(p != NC) {
-    if(is_pin_configured(p, g_digPinConfigured)) {
-      digital_io_write(get_GPIO_Port(STM_PORT(p)), STM_GPIO_PIN(p), ulVal);
-    } else {
-      printf("Pin Not Configured!\n");
-    }
-  }
+  digitalWriteFast(digitalPinToPinName(ulPin), ulVal);
 }
 
 int digitalRead( uint32_t ulPin )
 {
-  uint8_t level = 0;
-  PinName p = digitalPinToPinName(ulPin);
-  if(p != NC) {
-    if(is_pin_configured(p, g_digPinConfigured)) {
-      level = digital_io_read(get_GPIO_Port(STM_PORT(p)), STM_GPIO_PIN(p));
+  return digitalReadFast(digitalPinToPinName(ulPin));
     }
-  }
-  return (level)? HIGH : LOW;
+
+void digitalToggle(uint32_t ulPin)
+{
+  digitalToggleFast(digitalPinToPinName(ulPin));
 }
 
 #ifdef __cplusplus

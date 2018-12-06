@@ -66,7 +66,7 @@
 #elif defined(STM32F2xx) || defined(STM32L4xx)
 #define UART_NUM (6)
 #elif defined(STM32F1xx) || defined(STM32F3xx) ||\
-      defined(STM32L0xx) || defined(STM32L1xx)
+	  defined(STM32L0xx) || defined(STM32L1xx)
 #define UART_NUM (5)
 #else
 #error "Unknown Family - unknown UART_NUM"
@@ -92,9 +92,6 @@ void uart_init(serial_t *obj)
   }
 
   UART_HandleTypeDef *huart = &(obj->handle);
-  GPIO_InitTypeDef GPIO_InitStruct;
-  GPIO_TypeDef *port;
-  uint32_t function = (uint32_t)NC;
 
   /* Determine the U(S)ART peripheral to use (USART1, USART2, ...) */
   USART_TypeDef *uart_tx = pinmap_peripheral(obj->pin_tx, PinMap_UART_TX);
@@ -116,6 +113,7 @@ void uart_init(serial_t *obj)
     core_debug("ERROR: U(S)ART pins mismatch\n");
     return;
   }
+
   /* Enable USART clock */
 #if defined(USART1_BASE)
   else if(obj->uart == USART1) {
@@ -259,36 +257,9 @@ void uart_init(serial_t *obj)
   __HAL_RCC_SYSCFG_CLK_ENABLE();
 #endif
 
-  /* Configure GPIOs */
-  /* RX */
-  port = set_GPIO_Port_Clock(STM_PORT(obj->pin_rx));
-  function = pinmap_function(obj->pin_rx, PinMap_UART_RX);
-  GPIO_InitStruct.Pin         = STM_GPIO_PIN(obj->pin_rx);
-  GPIO_InitStruct.Mode        = STM_PIN_MODE(function);
-  GPIO_InitStruct.Pull        = STM_PIN_PUPD(function);
-  /* Common */
-#ifdef STM32F1xx
-  pin_SetF1AFPin(STM_PIN_AFNUM(function));
-#else
-  GPIO_InitStruct.Alternate   = STM_PIN_AFNUM(function);
-#endif /* STM32F1xx */
-#ifdef GPIO_SPEED_FREQ_VERY_HIGH
-  GPIO_InitStruct.Speed       = GPIO_SPEED_FREQ_VERY_HIGH;
-#else
-  GPIO_InitStruct.Speed       = GPIO_SPEED_FREQ_HIGH;
-#endif
-  HAL_GPIO_Init(port, &GPIO_InitStruct);
-
-  /* TX */
-  port = set_GPIO_Port_Clock(STM_PORT(obj->pin_tx));
-  function = pinmap_function(obj->pin_tx, PinMap_UART_TX);
-  GPIO_InitStruct.Pin         = STM_GPIO_PIN(obj->pin_tx);
-  GPIO_InitStruct.Mode        = STM_PIN_MODE(function);
-  GPIO_InitStruct.Pull        = STM_PIN_PUPD(function);
-#ifndef STM32F1xx
-  GPIO_InitStruct.Alternate   = STM_PIN_AFNUM(function);
-#endif /* STM32F1xx */
-  HAL_GPIO_Init(port, &GPIO_InitStruct);
+  /* Configure UART GPIO pins */
+  pinmap_pinout(obj->pin_tx, PinMap_UART_TX);
+  pinmap_pinout(obj->pin_rx, PinMap_UART_RX);
 
   /* Configure uart */
   uart_handlers[obj->index] = huart;
@@ -300,7 +271,10 @@ void uart_init(serial_t *obj)
   huart->Init.Mode         = UART_MODE_TX_RX;
   huart->Init.HwFlowCtl    = UART_HWCONTROL_NONE;
   huart->Init.OverSampling = UART_OVERSAMPLING_16;
+#if !defined(STM32F1xx) && !defined(STM32F2xx) && !defined(STM32F4xx)\
+ && !defined(STM32L1xx)
   huart->AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+#endif
 #ifdef UART_ONE_BIT_SAMPLE_DISABLE
   huart->Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
 #endif
@@ -333,7 +307,7 @@ void uart_init(serial_t *obj)
       /* Enable the clock if not already set by user */
       enableClock(LSE_CLOCK);
 
-       __HAL_RCC_LPUART1_CONFIG(RCC_LPUART1CLKSOURCE_LSE);
+      __HAL_RCC_LPUART1_CONFIG(RCC_LPUART1CLKSOURCE_LSE);
       if (HAL_UART_Init(huart) == HAL_OK) {
         return;
       }
@@ -1032,7 +1006,8 @@ void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
 {
   uint8_t index = uart_index(huart);
   serial_t *obj = rx_callback_obj[index];
-   HAL_UART_Receive_IT(huart,  &(obj->recv), 1);
+
+  HAL_UART_Receive_IT(huart,  &(obj->recv), 1);
 }
 #endif /* HAL_UART_MODULE_ENABLED */
 

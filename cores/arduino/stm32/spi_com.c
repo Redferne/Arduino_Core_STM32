@@ -50,6 +50,7 @@
 #include "stm32_def.h"
 #include "spi_com.h"
 #include "PinAF_STM32F1.h"
+#include "pinconfig.h"
 
 #ifdef HAL_SPI_MODULE_ENABLED
 
@@ -121,7 +122,7 @@ uint32_t spi_getClkFreqInst(SPI_TypeDef * spi_inst)
   if(spi_inst != NP) {
     /* Get source clock depending on SPI instance */
     switch ((uint32_t)spi_inst) {
-#if defined(SPI1_BASE) || defined(SPI4_BASE) || defined(SPI5_BASE) || defined(SPI16_BASE)
+#if defined(SPI1_BASE) || defined(SPI4_BASE) || defined(SPI5_BASE) || defined(SPI6_BASE)
       /* Some STM32's (eg. STM32F302x8) have no SPI1, but do have SPI2/3. */
 #if defined SPI1_BASE
       case (uint32_t)SPI1:
@@ -194,9 +195,8 @@ void spi_init(spi_t *obj, uint32_t speed, spi_mode_e mode, uint8_t msb)
     return;
 
   SPI_HandleTypeDef *handle = &(obj->handle);
-  GPIO_InitTypeDef  GPIO_InitStruct;
-  GPIO_TypeDef *port;
   uint32_t spi_freq = 0;
+  uint32_t pull = 0;
 
   // Determine the SPI to use
   SPI_TypeDef *spi_mosi = pinmap_peripheral(obj->pin_mosi, PinMap_SPI_MOSI);
@@ -282,69 +282,17 @@ void spi_init(spi_t *obj, uint32_t speed, spi_mode_e mode, uint8_t msb)
   handle->Init.NSSPMode          = SPI_NSS_PULSE_DISABLE;
 #endif
 
-  if(obj->pin_mosi != NC) {
-    port = set_GPIO_Port_Clock(STM_PORT(obj->pin_mosi));
-    GPIO_InitStruct.Pin       = STM_GPIO_PIN(obj->pin_mosi);
-    GPIO_InitStruct.Mode      = STM_PIN_MODE(pinmap_function(obj->pin_mosi,PinMap_SPI_MOSI));
-    GPIO_InitStruct.Pull      = STM_PIN_PUPD(pinmap_function(obj->pin_mosi,PinMap_SPI_MOSI));
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_HIGH;
-#ifdef STM32F1xx
-    pin_SetF1AFPin(STM_PIN_AFNUM(pinmap_function(obj->pin_mosi,PinMap_SPI_MOSI)));
-#else
-    GPIO_InitStruct.Alternate = STM_PIN_AFNUM(pinmap_function(obj->pin_mosi,PinMap_SPI_MOSI));
-#endif /* STM32F1xx */
-    HAL_GPIO_Init(port, &GPIO_InitStruct);
-  }
-
-  if(obj->pin_miso != NC) {
-    port = set_GPIO_Port_Clock(STM_PORT(obj->pin_miso));
-    GPIO_InitStruct.Pin       = STM_GPIO_PIN(obj->pin_miso);
-    GPIO_InitStruct.Mode      = STM_PIN_MODE(pinmap_function(obj->pin_miso,PinMap_SPI_MISO));
-    GPIO_InitStruct.Pull      = STM_PIN_PUPD(pinmap_function(obj->pin_miso,PinMap_SPI_MISO));
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_HIGH;
-#ifdef STM32F1xx
-    pin_SetF1AFPin(STM_PIN_AFNUM(pinmap_function(obj->pin_miso,PinMap_SPI_MISO)));
-#else
-    GPIO_InitStruct.Alternate = STM_PIN_AFNUM(pinmap_function(obj->pin_miso,PinMap_SPI_MISO));
-#endif /* STM32F1xx */
-    HAL_GPIO_Init(port, &GPIO_InitStruct);
-  }
-
-  if(obj->pin_sclk != NC) {
-    port = set_GPIO_Port_Clock(STM_PORT(obj->pin_sclk));
-    GPIO_InitStruct.Pin       = STM_GPIO_PIN(obj->pin_sclk);
-    GPIO_InitStruct.Mode      = STM_PIN_MODE(pinmap_function(obj->pin_sclk,PinMap_SPI_SCLK));
-    /*
-     * According the STM32 Datasheet for SPI peripheral we need to PULLDOWN
-     * or PULLUP the SCK pin according the polarity used.
-     */
-    if(handle->Init.CLKPolarity == SPI_POLARITY_LOW) {
-      GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    } else {
-      GPIO_InitStruct.Pull = GPIO_PULLUP;
-    }
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_HIGH;
-#ifdef STM32F1xx
-    pin_SetF1AFPin(STM_PIN_AFNUM(pinmap_function(obj->pin_sclk,PinMap_SPI_SCLK)));
-#else
-    GPIO_InitStruct.Alternate = STM_PIN_AFNUM(pinmap_function(obj->pin_sclk,PinMap_SPI_SCLK));
-#endif /* STM32F1xx */
-    HAL_GPIO_Init(port, &GPIO_InitStruct);
-  }
-
-  if(obj->pin_ssel != NC) {
-    port = set_GPIO_Port_Clock(STM_PORT(obj->pin_ssel));
-    GPIO_InitStruct.Pin       = STM_GPIO_PIN(obj->pin_ssel);
-    GPIO_InitStruct.Mode      = STM_PIN_MODE(pinmap_function(obj->pin_ssel,PinMap_SPI_SSEL));
-    GPIO_InitStruct.Pull      = STM_PIN_PUPD(pinmap_function(obj->pin_ssel,PinMap_SPI_SSEL));
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_HIGH;
-#ifdef STM32F1xx
-    pin_SetF1AFPin(STM_PIN_AFNUM(pinmap_function(obj->pin_ssel,PinMap_SPI_SSEL)));
-#else
-    GPIO_InitStruct.Alternate = STM_PIN_AFNUM(pinmap_function(obj->pin_ssel,PinMap_SPI_SSEL));
-#endif /* STM32F1xx */
-    HAL_GPIO_Init(port, &GPIO_InitStruct);
-  }
+  /* Configure SPI GPIO pins */
+  pinmap_pinout(obj->pin_mosi, PinMap_SPI_MOSI);
+  pinmap_pinout(obj->pin_miso, PinMap_SPI_MISO);
+  pinmap_pinout(obj->pin_sclk, PinMap_SPI_SCLK);
+  /*
+   * According the STM32 Datasheet for SPI peripheral we need to PULLDOWN
+   * or PULLUP the SCK pin according the polarity used.
+   */
+  pull = (handle->Init.CLKPolarity == SPI_POLARITY_LOW) ? GPIO_PULLDOWN: GPIO_PULLUP;
+  pin_PullConfig(get_GPIO_Port(STM_PORT(obj->pin_sclk)), STM_LL_GPIO_PIN(obj->pin_sclk), pull);
+  pinmap_pinout(obj->pin_ssel, PinMap_SPI_SSEL);
 
 #if defined SPI1_BASE
   // Enable SPI clock

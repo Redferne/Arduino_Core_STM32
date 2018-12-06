@@ -108,6 +108,12 @@
   void serialEventLP1() __attribute__((weak));
 #endif
 
+#if defined(HAVE_HWSERIALLP1)
+  HardwareSerial SerialLP1(LPUART1);
+  void serialEventLP1() __attribute__((weak));
+#endif
+//#endif // HAVE_HWSERIALx
+
 void serialEventRun(void)
 {
 #if defined(HAVE_HWSERIAL1)
@@ -281,6 +287,16 @@ void HardwareSerial::init(void)
   _serial.tx_tail = 0;
 }
 
+void HardwareSerial::configForLowPower(void)
+{
+#if defined(HAL_PWR_MODULE_ENABLED) && defined(UART_IT_WUF)
+  // Reconfigure properly Serial instance to use HSI as clock source
+  end();
+  uart_config_lowpower(&_serial);
+  begin(_serial.baudrate, _config);
+#endif
+}
+
 // Actual interrupt handlers //////////////////////////////////////////////////////////////
 
 void HardwareSerial::_rx_complete_irq(serial_t* obj)
@@ -301,16 +317,6 @@ void HardwareSerial::_rx_complete_irq(serial_t* obj)
       obj->rx_head = i;
     }
   }
-}
-
-void HardwareSerial::configForLowPower(void)
-{
-#if defined(HAL_PWR_MODULE_ENABLED) && defined(UART_IT_WUF)
-  // Reconfigure properly Serial instance to use HSI as clock source
-  end();
-  uart_config_lowpower(&_serial);
-  begin(_serial.baudrate, _config);
-#endif
 }
 
 // Actual interrupt handlers //////////////////////////////////////////////////////////////

@@ -36,6 +36,7 @@
   ******************************************************************************
   */
 #include "clock.h"
+#include "stm32yyxx_ll_cortex.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -71,7 +72,7 @@ uint32_t GetCurrentMilli(void)
   return HAL_GetTick();
 }
 
-void noOsSystickHandler() {
+void noOsSystickHandler(){
   if (systick_user_callback) {
       systick_user_callback();
   }
@@ -95,40 +96,6 @@ void SysTick_Handler(void)
 }
 
 /**
-  * @brief  Function provides us delay (required by some arduino libraries).
-  *         Can be called inside an interrupt.
-  * @param  None
-  * @retval None
-  */
-void delayInsideIT(uint32_t delay_us)
-{
-  uint32_t nb_loop;
-#if defined (STM32F0xx) || defined (STM32L0xx)
-  nb_loop = (((HAL_RCC_GetHCLKFreq() / 1000000)/5)*delay_us)+1; /* uS (divide by 4 because each loop take about 4 cycles including nop +1 is here to avoid delay of 0 */
-  __asm__ volatile(
-  "1: " "\n\t"
-  " nop " "\n\t"
-  " sub %0, %0, #1 " "\n\t"
-  " bne 1b " "\n\t"
-  : "=r" (nb_loop)
-  : "0"(nb_loop)
-  : "r3"
-  );
-#else
-  nb_loop = (((HAL_RCC_GetHCLKFreq() / 1000000)/4)*delay_us)+1; /* uS (divide by 4 because each loop take about 4 cycles including nop +1 is here to avoid delay of 0 */
-  __asm__ volatile(
-  "1: " "\n\t"
-  " nop " "\n\t"
-  " subs.w %0, %0, #1 " "\n\t"
-  " bne 1b " "\n\t"
-  : "=r" (nb_loop)
-  : "0"(nb_loop)
-  : "r3"
-  );
-#endif
-}
-
-/**
   * @brief  Enable the specified clock if not already set
   * @param  source: clock source: LSE_CLOCK, LSI_CLOCK, HSI_CLOCK or HSE_CLOCK
   * @retval None
@@ -137,7 +104,8 @@ void enableClock(sourceClock_t source)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-   switch(source) {
+
+  switch(source) {
     case LSI_CLOCK:
       if(__HAL_RCC_GET_FLAG(RCC_FLAG_LSIRDY) == RESET) {
         RCC_OscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI;

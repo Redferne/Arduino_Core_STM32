@@ -76,6 +76,8 @@
 
 #define SLAVE_MODE_TRANSMIT     0
 #define SLAVE_MODE_RECEIVE      1
+#define SLAVE_MODE_LISTEN       2
+
 
 /**
   * @}
@@ -155,8 +157,6 @@ void i2c_custom_init(i2c_t *obj, i2c_timing_e timing, uint32_t addressingMode, u
   if(obj == NULL)
     return;
 
-  GPIO_InitTypeDef  GPIO_InitStruct;
-  GPIO_TypeDef *port;
   I2C_HandleTypeDef *handle = &(obj->handle);
 
   // Determine the I2C to use
@@ -230,31 +230,9 @@ void i2c_custom_init(i2c_t *obj, i2c_timing_e timing, uint32_t addressingMode, u
   }
 #endif // I2C4_BASE
 
-  //SCL
-  port = set_GPIO_Port_Clock(STM_PORT(obj->scl));
-  GPIO_InitStruct.Pin         = STM_GPIO_PIN(obj->scl);
-  GPIO_InitStruct.Mode        = STM_PIN_MODE(pinmap_function(obj->scl,PinMap_I2C_SCL));
-  GPIO_InitStruct.Speed       = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.Pull        = STM_PIN_PUPD(pinmap_function(obj->scl,PinMap_I2C_SCL));
-#ifdef STM32F1xx
-  pin_SetF1AFPin(STM_PIN_AFNUM(pinmap_function(obj->scl,PinMap_I2C_SCL)));
-#else
-  GPIO_InitStruct.Alternate   = STM_PIN_AFNUM(pinmap_function(obj->scl,PinMap_I2C_SCL));
-#endif /* STM32F1xx */
-  HAL_GPIO_Init(port, &GPIO_InitStruct);
-
-  //SDA
-  port = set_GPIO_Port_Clock(STM_PORT(obj->sda));
-  GPIO_InitStruct.Pin         = STM_GPIO_PIN(obj->sda);
-  GPIO_InitStruct.Mode        = STM_PIN_MODE(pinmap_function(obj->sda,PinMap_I2C_SDA));
-  GPIO_InitStruct.Speed       = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.Pull        = STM_PIN_PUPD(pinmap_function(obj->sda,PinMap_I2C_SDA));
-#ifdef STM32F1xx
-  pin_SetF1AFPin(STM_PIN_AFNUM(pinmap_function(obj->sda,PinMap_I2C_SDA)));
-#else
-  GPIO_InitStruct.Alternate   = STM_PIN_AFNUM(pinmap_function(obj->sda,PinMap_I2C_SDA));
-#endif /* STM32F1xx */
-  HAL_GPIO_Init(port, &GPIO_InitStruct);
+  /* Configure I2C GPIO pins */
+  pinmap_pinout(obj->scl, PinMap_I2C_SCL);
+  pinmap_pinout(obj->sda, PinMap_I2C_SDA);
 
   handle->Instance             = obj->i2c;
 #if defined (STM32F0xx) || defined (STM32F3xx) || defined (STM32F7xx) ||\
@@ -262,7 +240,12 @@ void i2c_custom_init(i2c_t *obj, i2c_timing_e timing, uint32_t addressingMode, u
   handle->Init.Timing      = timing;
 #else
   handle->Init.ClockSpeed      = timing;
-  handle->Init.DutyCycle       = I2C_DUTYCYCLE_2;
+  /* Standard mode (sm) is up to 100kHz, then it's Fast mode (fm)     */
+  /* In fast mode duty cyble bit must be set in CCR register          */
+  if(timing > 100000)
+    handle->Init.DutyCycle       = I2C_DUTYCYCLE_16_9;
+  else
+    handle->Init.DutyCycle       = I2C_DUTYCYCLE_2;
 #endif
   handle->Init.OwnAddress1     = ownAddress;
   handle->Init.OwnAddress2     = 0xFF;
@@ -284,6 +267,9 @@ void i2c_custom_init(i2c_t *obj, i2c_timing_e timing, uint32_t addressingMode, u
   HAL_I2C_Init(handle);
 
   obj->isMaster = master;
+  /* Initialize default values */
+  obj->slaveRxNbData = 0;
+  obj->slaveMode = SLAVE_MODE_LISTEN;
 }
 
 /**
@@ -327,6 +313,12 @@ void i2c_setTiming(i2c_t *obj, uint32_t frequency)
   obj->handle.Init.Timing = f;
 #else
   obj->handle.Init.ClockSpeed = f;
+  /* Standard mode (sm) is up to 100kHz, then it's Fast mode (fm)     */
+  /* In fast mode duty cyble bit must be set in CCR register          */
+  if(frequency > 100000)
+    obj->handle.Init.DutyCycle       = I2C_DUTYCYCLE_16_9;
+  else
+    obj->handle.Init.DutyCycle       = I2C_DUTYCYCLE_2;
 #endif
 /*
   else if(frequency <= 600000)
@@ -355,6 +347,11 @@ i2c_status_e i2c_master_write(i2c_t *obj, uint8_t dev_address,
   i2c_status_e ret = I2C_ERROR;
   uint32_t tickstart = HAL_GetTick();
   uint32_t delta = 0;
+
+  /* When size is 0, this is usually an I2C scan / ping to check if device is there and ready */
+  if (size == 0) {
+    return i2c_IsDeviceReady(obj, dev_address, 1);
+  }
 
   do{
     if(HAL_I2C_Master_Transmit_IT(&(obj->handle), dev_address, data, size) == HAL_OK){
@@ -396,8 +393,9 @@ i2c_status_e i2c_slave_write_IT(i2c_t *obj, uint8_t *data, uint16_t size)
   // Check the communication status
   for(i = 0; i < size; i++) {
     obj->i2cTxRxBuffer[i] = *(data+i);
-    obj->i2cTxRxBufferSize++;
   }
+
+  obj->i2cTxRxBufferSize = size;
 
   return I2C_OK;
 }
@@ -448,8 +446,19 @@ i2c_status_e i2c_IsDeviceReady(i2c_t *obj, uint8_t devAddr, uint32_t trials)
 {
   i2c_status_e ret = HAL_OK;
 
-  if(HAL_I2C_IsDeviceReady( &(obj->handle), devAddr, trials, I2C_TIMEOUT_TICK) != HAL_OK) {
-    ret = I2C_BUSY;
+  switch (HAL_I2C_IsDeviceReady( &(obj->handle), devAddr, trials, I2C_TIMEOUT_TICK)) {
+    case HAL_OK:
+      ret = HAL_OK;
+      break;
+    case HAL_TIMEOUT:
+      ret = I2C_TIMEOUT;
+      break;
+    case HAL_BUSY:
+      ret = I2C_BUSY;
+      break;
+    default:
+      ret = I2C_TIMEOUT;
+      break;
   }
 
   return ret;
@@ -510,19 +519,30 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, ui
 
   if(AddrMatchCode == hi2c->Init.OwnAddress1) {
     if(TransferDirection == I2C_DIRECTION_RECEIVE) {
-
-      obj->i2cTxRxBufferSize = 0;
       obj->slaveMode = SLAVE_MODE_TRANSMIT;
 
       if(obj->i2c_onSlaveTransmit != NULL) {
         obj->i2c_onSlaveTransmit();
       }
-      HAL_I2C_Slave_Sequential_Transmit_IT(hi2c, obj->i2cTxRxBuffer,
+#if defined(STM32L0xx)
+      HAL_I2C_Slave_Seq_Transmit_IT(hi2c, (uint8_t *) obj->i2cTxRxBuffer,
                                            obj->i2cTxRxBufferSize, I2C_LAST_FRAME);
+#else
+      HAL_I2C_Slave_Sequential_Transmit_IT(hi2c, (uint8_t *) obj->i2cTxRxBuffer,
+                                           obj->i2cTxRxBufferSize, I2C_LAST_FRAME);
+#endif
     } else {
+      obj->slaveRxNbData = 0;
       obj->slaveMode = SLAVE_MODE_RECEIVE;
-      HAL_I2C_Slave_Sequential_Receive_IT(hi2c, obj->i2cTxRxBuffer,
-                                          I2C_TXRX_BUFFER_SIZE, I2C_LAST_FRAME);
+      /*  We don't know in advance how many bytes will be sent by master so
+       *  we'll fetch one by one until master ends the sequence */
+#if defined(STM32L0xx)
+      HAL_I2C_Slave_Seq_Receive_IT(hi2c, (uint8_t *) &(obj->i2cTxRxBuffer[obj->slaveRxNbData]),
+                                          1, I2C_NEXT_FRAME);
+#else
+      HAL_I2C_Slave_Sequential_Receive_IT(hi2c, (uint8_t *) &(obj->i2cTxRxBuffer[obj->slaveRxNbData]),
+                                          1, I2C_NEXT_FRAME);
+#endif
     }
   }
 }
@@ -535,17 +555,59 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, ui
   */
 void HAL_I2C_ListenCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-  uint8_t nbData = 0;
   i2c_t *obj = get_i2c_obj(hi2c);
 
+  /*  Previous master transaction now ended, so inform upper layer if needed
+   *  then prepare for listening to next request */
   if((obj->i2c_onSlaveReceive != NULL) &&
     (obj->slaveMode == SLAVE_MODE_RECEIVE)) {
-    nbData = I2C_TXRX_BUFFER_SIZE - obj->handle.XferSize;
-    if(nbData != 0) {
-      obj->i2c_onSlaveReceive(obj->i2cTxRxBuffer, nbData);
+    if(obj->slaveRxNbData != 0) {
+      obj->i2c_onSlaveReceive((uint8_t *) obj->i2cTxRxBuffer, obj->slaveRxNbData);
     }
   }
+  obj->slaveMode = SLAVE_MODE_LISTEN;
+  obj->slaveRxNbData = 0;
   HAL_I2C_EnableListen_IT(hi2c);
+}
+
+/**
+  * @brief Slave RX complete callback
+  * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains
+  *                the configuration information for the specified I2C.
+  * @retval None
+  */
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+  i2c_t *obj = get_i2c_obj(hi2c);
+  /* One more byte was received, store it then prepare next */
+  if(obj->slaveRxNbData < I2C_TXRX_BUFFER_SIZE) {
+    obj->slaveRxNbData++;
+  } else {
+    core_debug("ERROR: I2C Slave RX overflow\n");
+  }
+  /* Restart interrupt mode for next Byte */
+  if(obj->slaveMode == SLAVE_MODE_RECEIVE) {
+#if defined(STM32L0xx)
+      HAL_I2C_Slave_Seq_Receive_IT(hi2c, (uint8_t *) &(obj->i2cTxRxBuffer[obj->slaveRxNbData]),
+                                          1, I2C_NEXT_FRAME);
+#else
+      HAL_I2C_Slave_Sequential_Receive_IT(hi2c, (uint8_t *) &(obj->i2cTxRxBuffer[obj->slaveRxNbData]),
+                                          1, I2C_NEXT_FRAME);
+#endif
+  }
+}
+
+/**
+  * @brief Slave TX complete callback
+  * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains
+  *                the configuration information for the specified I2C.
+  * @retval None
+  */
+void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+  i2c_t *obj = get_i2c_obj(hi2c);
+  /* Reset transmit buffer size */
+  obj->i2cTxRxBufferSize = 0;
 }
 
 /**
