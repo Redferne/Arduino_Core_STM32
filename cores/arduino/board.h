@@ -21,7 +21,7 @@ extern "C"{
 #include "twi.h"
 #include "uart.h"
 #ifdef USBCON
-#include "usb_interface.h"
+#include "usbd_interface.h"
 #endif //USBCON
 
 void init( void ) ;

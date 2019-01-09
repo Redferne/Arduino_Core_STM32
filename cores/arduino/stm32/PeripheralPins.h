@@ -76,5 +76,10 @@ extern const PinMap PinMap_DFSDM_DATIN[];
 extern const PinMap PinMap_DFSDM_CKIN[];
 extern const PinMap PinMap_DFSDM_CKOUT[];
 
+//*** USB ***
+extern const PinMap PinMap_USB[];
+extern const PinMap PinMap_USB_OTG_FS[];
+extern const PinMap PinMap_USB_OTG_HS[];
+
 #endif
 

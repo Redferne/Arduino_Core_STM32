@@ -20,7 +20,7 @@
 */
 
 #include "Mouse.h"
-#include "usbd_hid_composite.h"
+//#include "usbd_hid_composite.h"
 
 #if defined(USBCON)
 

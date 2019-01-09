@@ -2,25 +2,17 @@
   ******************************************************************************
   * @file    usbd_customhid.h
   * @author  MCD Application Team
-  * @version V2.4.2
-  * @date    11-December-2015
   * @brief   header file for the usbd_customhid.c file.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                      http://www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -49,27 +41,41 @@
 /** @defgroup USBD_CUSTOM_HID_Exported_Defines
   * @{
   */ 
-#define CUSTOM_HID_EPIN_ADDR                 0x81
-#define CUSTOM_HID_EPIN_SIZE                 0x02
+#define CUSTOM_HID_EPIN_ADDR                 0x81U
+#define CUSTOM_HID_EPIN_SIZE                 0x02U
 
-#define CUSTOM_HID_EPOUT_ADDR                0x01
-#define CUSTOM_HID_EPOUT_SIZE                0x02
+#define CUSTOM_HID_EPOUT_ADDR                0x01U
+#define CUSTOM_HID_EPOUT_SIZE                0x02U
 
-#define USB_CUSTOM_HID_CONFIG_DESC_SIZ       41
-#define USB_CUSTOM_HID_DESC_SIZ              9
+#define USB_CUSTOM_HID_CONFIG_DESC_SIZ       41U
+#define USB_CUSTOM_HID_DESC_SIZ              9U
 
-#define CUSTOM_HID_DESCRIPTOR_TYPE           0x21
-#define CUSTOM_HID_REPORT_DESC               0x22
+#ifndef CUSTOM_HID_HS_BINTERVAL
+  #define CUSTOM_HID_HS_BINTERVAL            0x05U
+#endif /* CUSTOM_HID_HS_BINTERVAL */
 
+#ifndef CUSTOM_HID_FS_BINTERVAL
+  #define CUSTOM_HID_FS_BINTERVAL            0x05U
+#endif /* CUSTOM_HID_FS_BINTERVAL */
 
-#define CUSTOM_HID_REQ_SET_PROTOCOL          0x0B
-#define CUSTOM_HID_REQ_GET_PROTOCOL          0x03
+#ifndef USBD_CUSTOMHID_OUTREPORT_BUF_SIZE
+  #define USBD_CUSTOMHID_OUTREPORT_BUF_SIZE  0x02U
+#endif /* USBD_CUSTOMHID_OUTREPORT_BUF_SIZE */
+#ifndef USBD_CUSTOM_HID_REPORT_DESC_SIZE
+  #define USBD_CUSTOM_HID_REPORT_DESC_SIZE   163U
+#endif /* USBD_CUSTOM_HID_REPORT_DESC_SIZE */
 
-#define CUSTOM_HID_REQ_SET_IDLE              0x0A
-#define CUSTOM_HID_REQ_GET_IDLE              0x02
+#define CUSTOM_HID_DESCRIPTOR_TYPE           0x21U
+#define CUSTOM_HID_REPORT_DESC               0x22U
 
-#define CUSTOM_HID_REQ_SET_REPORT            0x09
-#define CUSTOM_HID_REQ_GET_REPORT            0x01
+#define CUSTOM_HID_REQ_SET_PROTOCOL          0x0BU
+#define CUSTOM_HID_REQ_GET_PROTOCOL          0x03U
+
+#define CUSTOM_HID_REQ_SET_IDLE              0x0AU
+#define CUSTOM_HID_REQ_GET_IDLE              0x02U
+
+#define CUSTOM_HID_REQ_SET_REPORT            0x09U
+#define CUSTOM_HID_REQ_GET_REPORT            0x01U
 /**
   * @}
   */ 
@@ -80,7 +86,7 @@
   */
 typedef enum
 {
-  CUSTOM_HID_IDLE = 0,
+  CUSTOM_HID_IDLE = 0U,
   CUSTOM_HID_BUSY,
 }
 CUSTOM_HID_StateTypeDef; 
@@ -90,7 +96,7 @@ typedef struct _USBD_CUSTOM_HID_Itf
   uint8_t                  *pReport;
   int8_t (* Init)          (void);
   int8_t (* DeInit)        (void);
-  int8_t (* OutEvent)      (uint8_t, uint8_t );   
+  int8_t (* OutEvent)      (uint8_t event_idx, uint8_t state);
 
 }USBD_CUSTOM_HID_ItfTypeDef;
 

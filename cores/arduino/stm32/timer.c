@@ -560,8 +560,8 @@ uint32_t getTimerIrq(TIM_TypeDef* tim)
 void TimerHandleDeinit(stimer_t *obj)
 {
   if(obj != NULL) {
-    HAL_TIM_Base_Stop_IT(&(obj->handle));
     HAL_TIM_Base_DeInit(&(obj->handle));
+    HAL_TIM_Base_Stop_IT(&(obj->handle));
   }
 }
 
