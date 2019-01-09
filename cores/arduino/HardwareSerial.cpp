@@ -103,10 +103,6 @@
   HardwareSerial Serial10(UART10);
   void serialEvent10() __attribute__((weak));
 #endif
-#if defined(HAVE_HWSERIALLP1)
-  HardwareSerial SerialLP1(LPUART1);
-  void serialEventLP1() __attribute__((weak));
-#endif
 
 #if defined(HAVE_HWSERIALLP1)
   HardwareSerial SerialLP1(LPUART1);
@@ -452,8 +448,10 @@ void HardwareSerial::flush()
   if (!_written)
     return;
 
-  while((_serial.tx_head != _serial.tx_tail)) {
+  uint8_t timeout = 200;
+  while((_serial.tx_head != _serial.tx_tail) && timeout--) {
     // nop, the interrupt handler will free up space for us
+    delay(1);
   }
   // If we get here, nothing is queued anymore (DRIE is disabled) and
   // the hardware finished tranmission (TXC is set).
