@@ -47,6 +47,7 @@ static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to)
     return value << (to-from);
 }
 
+#if defined(HAL_ADC_MODULE_ENABLED)
 
 //perform the read operation on the selected analog pin.
 //the initialization of the analog PIN is done through this function
@@ -61,6 +62,7 @@ uint32_t analogRead(uint32_t ulPin)
   return value;
 }
 
+#endif
 
 void analogOutputInit(void) {
 }

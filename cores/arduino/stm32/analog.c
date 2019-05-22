@@ -46,6 +46,8 @@
 /** @addtogroup STM32F4xx_System_Private_Includes
   * @{
   */
+
+
 #include "stm32_def.h"
 #include "analog.h"
 #include "timer.h"
@@ -65,6 +67,8 @@
 /**
   * @}
   */
+
+#if defined(HAL_ADC_MODULE_ENABLED)
 
 /** @addtogroup STM32F4xx_System_Private_Defines
   * @{
@@ -98,6 +102,9 @@
 #ifndef ADC_REGULAR_RANK_1
 #define ADC_REGULAR_RANK_1  1
 #endif
+
+#endif
+
 /**
   * @}
   */
@@ -122,6 +129,9 @@ static PinName g_current_pin = NC;
 /** @addtogroup STM32F4xx_System_Private_FunctionPrototypes
   * @{
   */
+
+#if defined(HAL_ADC_MODULE_ENABLED)
+
 static uint32_t get_adc_channel(PinName pin)
 {
   uint32_t function = pinmap_function(pin, PinMap_ADC);
@@ -194,6 +204,8 @@ static uint32_t get_adc_channel(PinName pin)
    }
   return channel;
 }
+
+#endif
 
 static uint32_t get_pwm_channel(PinName pin)
 {
@@ -381,6 +393,9 @@ void dac_stop(PinName pin)
   * @param hadc: ADC handle pointer
   * @retval None
   */
+
+#if defined(HAL_ADC_MODULE_ENABLED)
+
 void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
 {
   /*##-1- Enable peripherals and GPIO Clocks #################################*/
@@ -645,6 +660,8 @@ uint16_t adc_read_value(PinName pin)
 
   return uhADCxConvertedValue;
 }
+
+#endif
 
 ////////////////////////// PWM INTERFACE FUNCTIONS /////////////////////////////
 

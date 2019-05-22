@@ -41,10 +41,12 @@ void pinMode( uint32_t ulPin, uint32_t ulMode )
         dac_stop(p);
       } else
 #endif //HAL_DAC_MODULE_ENABLED
+#ifdef HAL_ADC_MODULE_ENABLED
       if(pin_in_pinmap(p, PinMap_PWM)) {
         pwm_stop(p);
       }
       reset_pin_configured(p, g_anOutputPinConfigured);
+#endif
     }
 
     switch (ulMode) {

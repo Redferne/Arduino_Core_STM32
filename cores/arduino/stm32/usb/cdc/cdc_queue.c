@@ -35,6 +35,7 @@
   ******************************************************************************
   */
 
+#if defined(USBD_USE_CDC)
 
 #include "cdc_queue.h"
 
@@ -138,3 +139,4 @@ uint8_t CDC_ReceiveQueue_Peek(CDC_ReceiveQueue_TypeDef *queue) {
 }
 
 
+#endif
