@@ -17,8 +17,11 @@
 */
 #ifndef _PINS_ARDUINO_H_
 #define _PINS_ARDUINO_H_
+#include <stdlib.h> /* Required for static_assert */
 // Include board variant
 #include "variant.h"
+#include "PinNames.h"
+
 
 // Avoid PortName issue
 _Static_assert(LastPort <= 0x0F, "PortName must be less than 16");
@@ -51,9 +54,9 @@ enum {
 // Analog pins must be contiguous to be able to loop on each value
 #define MAX_ANALOG_INPUTS 24
 _Static_assert(NUM_ANALOG_INPUTS <= MAX_ANALOG_INPUTS,
-               "Core NUM_ANALOG_INPUTS limited to MAX_ANALOG_INPUTS" );
+               "Core NUM_ANALOG_INPUTS limited to MAX_ANALOG_INPUTS");
 _Static_assert(NUM_ANALOG_FIRST >= NUM_ANALOG_INPUTS,
-               "First analog pin value (A0) must be greater than or equal to NUM_ANALOG_INPUTS" );
+               "First analog pin value (A0) must be greater than or equal to NUM_ANALOG_INPUTS");
 
 // Defined for backward compatibility with Firmata which unfortunately use it
 #define AEND (NUM_ANALOG_FIRST+NUM_ANALOG_INPUTS)
@@ -201,6 +204,7 @@ static const uint8_t SCL = PIN_WIRE_SCL;
 #ifdef __cplusplus
 extern "C" {
 #endif
+extern const PinName digitalPin[];
 
 #define NOT_AN_INTERRUPT            NC // -1
 

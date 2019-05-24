@@ -1,9 +1,6 @@
 /**
   ******************************************************************************
   * @file    stm32_eeprom.h
-  * @author  WI6LABS
-  * @version V1.0.0
-  * @date    01-August-2016
   * @brief   Header for eeprom module
   ******************************************************************************
   * @attention
@@ -40,10 +37,10 @@
 #define __STM32_EEPROM_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "variant.h"
+#include "stm32_def.h"
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Exported types ------------------------------------------------------------*/

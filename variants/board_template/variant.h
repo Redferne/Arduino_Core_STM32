@@ -31,19 +31,13 @@
 #ifndef _VARIANT_ARDUINO_STM32_
 #define _VARIANT_ARDUINO_STM32_
 
-/*----------------------------------------------------------------------------
- *        Headers
- *----------------------------------------------------------------------------*/
-#include "PeripheralPins.h"
-
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif // __cplusplus
 
 /*----------------------------------------------------------------------------
  *        Pins
  *----------------------------------------------------------------------------*/
-extern const PinName digitalPin[];
 
 // Define pin names to match digital pin number --> Dx
 // It could be used with preprocessor tests (e.g. #if PXn == 3)
@@ -63,7 +57,7 @@ extern const PinName digitalPin[];
 // !!! #define PB5  22
 // !!! #define PB3  23
 // !!! // 24 is PA4 (20)
-// !!! // 25 is PB4 (21)// #define PXn x
+// !!! // 25 is PB4 (21)
 // !!! #define PA2  26 // A15
 // !!! ...
 //#define PXn x
@@ -119,7 +113,7 @@ extern const PinName digitalPin[];
 //#define PIN_WIRE_SDA            14 // Default for Arduino connector compatibility
 //#define PIN_WIRE_SCL            15 // Default for Arduino connector compatibility
 
-// Timer Definitions
+// Timer Definitions (optional)
 //Do not use timer used by PWM pins when possible. See PinMap_PWM in PeripheralPins.c
 #define TIMER_TONE              TIMx
 

@@ -5,13 +5,17 @@
  * Core and peripherals registers definitions
 */
 #include "interrupt.h"
+#if 0
 #ifdef __cplusplus
 extern "C"{
 #endif // __cplusplus
+#endif
 #include "analog.h"
+#include "backup.h"
 #include "clock.h"
 #include "core_callback.h"
 #include "digital_io.h"
+#include "dwt.h"
 #include "hw_config.h"
 #include "low_power.h"
 #include "rtc.h"
@@ -20,12 +24,16 @@ extern "C"{
 #include "timer.h"
 #include "twi.h"
 #include "uart.h"
+#if 0
 #ifdef USBCON
 #include "usbd_interface.h"
 #endif //USBCON
-
-void init( void ) ;
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+void init(void) ;
 #ifdef __cplusplus
 }
-#endif // __cplusplus
+#endif /* __cplusplus */
 #endif /* _BOARD_H_ */

@@ -29,7 +29,6 @@
 #include "avr/dtostrf.h"
 #include "binary.h"
 #include "itoa.h"
-#include "utils.h"
 
 #include "wiring_analog.h"
 #include "wiring_constants.h"
@@ -42,13 +41,13 @@
 #include <board.h>
 
 #ifdef __cplusplus
-#include "HardwareSerial.h"
 #include "Tone.h"
-#include "USBSerial.h"
 #include "WCharacter.h"
+#include "WSerial.h"
 #include "WMath.h"
 #include "WString.h"
 #endif // __cplusplus
+
 
 #define clockCyclesPerMicrosecond() ( SystemCoreClock / 1000000L )
 #define clockCyclesToMicroseconds(a) ( ((a) * 1000L) / (SystemCoreClock / 1000L) )

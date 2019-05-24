@@ -31,19 +31,13 @@
 #ifndef _VARIANT_ARDUINO_STM32_
 #define _VARIANT_ARDUINO_STM32_
 
-/*----------------------------------------------------------------------------
- *        Headers
- *----------------------------------------------------------------------------*/
-#include "PeripheralPins.h"
-
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif // __cplusplus
 
 /*----------------------------------------------------------------------------
  *        Pins
  *----------------------------------------------------------------------------*/
-extern const PinName digitalPin[];
 
 #define PA0  0  // GPS_PPS_PIN
 #define PA8  1
@@ -143,8 +137,11 @@ extern const PinName digitalPin[];
 #define GPS_UART_RX             PB11
 
 // MEMS (LIS3DH)
-#define LIS3DH_INT1_PIN	        PB14
-#define LIS3DH_INT2_PIN	        PB15
+#define LIS3DH_INT1_PIN         PB14
+#define LIS3DH_INT2_PIN         PB15
+
+/* HAL configuration */
+#define HSE_VALUE               12000000U
 
 #ifdef __cplusplus
 } // extern "C"

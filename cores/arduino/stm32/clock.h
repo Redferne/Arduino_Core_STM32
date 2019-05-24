@@ -43,7 +43,7 @@
 #include "stm32_def.h"
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Exported types ------------------------------------------------------------*/
@@ -58,9 +58,8 @@ typedef enum {
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-uint32_t GetCurrentMilli(void);
-uint32_t GetCurrentMicro(void);
-void systick_attach_callback(void (*callback)(void));
+uint32_t getCurrentMillis(void);
+uint32_t getCurrentMicros(void);
 
 void enableClock(sourceClock_t source);
 #ifdef __cplusplus

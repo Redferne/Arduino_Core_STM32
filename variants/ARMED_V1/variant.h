@@ -19,19 +19,13 @@
 #ifndef _VARIANT_ARDUINO_STM32_
 #define _VARIANT_ARDUINO_STM32_
 
-/*----------------------------------------------------------------------------
- *        Headers
- *----------------------------------------------------------------------------*/
-#include "PeripheralPins.h"
-
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif // __cplusplus
 
 /*----------------------------------------------------------------------------
  *        Pins
  *----------------------------------------------------------------------------*/
-extern const PinName digitalPin[];
 
 #define PA0   0  //D0
 #define PA1   1  //D1

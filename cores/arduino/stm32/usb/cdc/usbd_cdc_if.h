@@ -25,21 +25,12 @@
 #ifdef USBD_USE_CDC
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc.h"
 #include "cdc_queue.h"
-#include "timer.h"
-
-
-#ifndef APP_RX_DATA_SIZE
-#define APP_RX_DATA_SIZE  2048
-#endif
-#ifndef APP_TX_DATA_SIZE
-#define APP_TX_DATA_SIZE  2048
-#endif
 
 /* Periodically, the state of the buffer "UserTxBuffer" is checked.
    The period depends on CDC_POLLING_INTERVAL */
@@ -56,9 +47,10 @@ extern CDC_ReceiveQueue_TypeDef ReceiveQueue;
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void CDC_continue_transmit(void);
-void CDC_resume_receive(void);
+bool CDC_resume_receive(void);
 void CDC_init(void);
 void CDC_deInit(void);
+bool CDC_connected();
 
 #ifdef __cplusplus
 }

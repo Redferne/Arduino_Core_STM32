@@ -20,71 +20,70 @@
 #include "PinConfigured.h"
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 
-//This is the list of the IOs configured
-uint32_t g_digPinConfigured[MAX_NB_PORT] = {0};
 extern uint32_t g_anOutputPinConfigured[MAX_NB_PORT];
 
-
-void pinMode( uint32_t ulPin, uint32_t ulMode )
+void pinMode(uint32_t ulPin, uint32_t ulMode)
 {
   PinName p = digitalPinToPinName(ulPin);
 
-  if(p != NC) {
+  if (p != NC) {
     // If the pin that support PWM or DAC output, we need to turn it off
-    if(is_pin_configured(p, g_anOutputPinConfigured)) {
+#if defined(HAL_DAC_MODULE_ENABLED) || defined(HAL_TIM_MODULE_ENABLED)
+    if (is_pin_configured(p, g_anOutputPinConfigured)) {
 #ifdef HAL_DAC_MODULE_ENABLED
-      if(pin_in_pinmap(p, PinMap_DAC)) {
+      if (pin_in_pinmap(p, PinMap_DAC)) {
         dac_stop(p);
       } else
 #endif //HAL_DAC_MODULE_ENABLED
-#ifdef HAL_ADC_MODULE_ENABLED
-      if(pin_in_pinmap(p, PinMap_PWM)) {
-        pwm_stop(p);
+#ifdef HAL_TIM_MODULE_ENABLED
+        if (pin_in_pinmap(p, PinMap_PWM)) {
+          pwm_stop(p);
+        }
+#endif //HAL_TIM_MODULE_ENABLED
+      {
+        reset_pin_configured(p, g_anOutputPinConfigured);
       }
-      reset_pin_configured(p, g_anOutputPinConfigured);
-#endif
     }
-
+#endif
     switch (ulMode) {
       case INPUT: /* INPUT_FLOATING */
         pin_function(p, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-      break;
+        break;
       case INPUT_PULLUP:
         pin_function(p, STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, 0));
-      break;
+        break;
       case INPUT_PULLDOWN:
         pin_function(p, STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLDOWN, 0));
         break;
       case INPUT_ANALOG:
         pin_function(p, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
-      break;
+        break;
       case OUTPUT:
         pin_function(p, STM_PIN_DATA(STM_MODE_OUTPUT_PP, GPIO_NOPULL, 0));
         break;
       case OUTPUT_OPEN_DRAIN:
         pin_function(p, STM_PIN_DATA(STM_MODE_OUTPUT_OD, GPIO_NOPULL, 0));
-      break;
+        break;
       default:
         Error_Handler();
-      break;
+        break;
     }
-    set_pin_configured(p, g_digPinConfigured);
   }
 }
 
-void digitalWrite( uint32_t ulPin, uint32_t ulVal )
+void digitalWrite(uint32_t ulPin, uint32_t ulVal)
 {
   digitalWriteFast(digitalPinToPinName(ulPin), ulVal);
 }
 
-int digitalRead( uint32_t ulPin )
+int digitalRead(uint32_t ulPin)
 {
   return digitalReadFast(digitalPinToPinName(ulPin));
-    }
+}
 
 void digitalToggle(uint32_t ulPin)
 {
